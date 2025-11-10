@@ -1,0 +1,28 @@
+description, class
+"Residential Land", 200
+"Residential Garage", 201
+"One-story Residence, any age, up to 999 square feet", 202
+"One-story Residence, any age, 1000 to 1800 square feet", 203
+"One-story Residence, any age, 1801 square feet and over", 204
+"Two-or-more story residence, over 62 years of age up to 2200 square feet", 205
+"Two-or-more story residence, over 62 years of age up to 2201--4999 square feet", 206
+"Two-or-more story residence, up to 62 years of age up to 2200 square feet", 207
+"Two-or-more story residence, up to 62 years of age up to 2201--4999 square feet", 208
+"Two-or-more story residence, any age, 5000 square feet and over", 209
+"Old style row house (townhome), over 62 years of age", 210
+"Apartment building with 2 to 6 units, any age", 211
+"Mixed-use commercial/residential building with apartment and commercial area totaling 6 units or less and below 20000 square feet of building area", 212
+"Split level residence with a lower level below grade", 234
+"Two-or-more story residence up to 62 years of age, 2001 to 3800 square feet", 278
+"Individually owned townhome or rowhouse up to 62 years of age", 295
+"Cooperative", 213
+"Owner-occupied B&B up to 6 rentable units", 218
+"Non-owner occupied B&B up to 6 units", 219
+"Single-Room Occupancy Rental Building", 225
+"Two-or-three story building, seven or more units", 313
+"Two-or-three story California type apartment, exterior entrance", 314
+"Two-or-three story California type apartment, interior entrance", 315
+"Mixed-use under 20,000 square feet with 7+ units", 318
+"Apartment building over three stories, 7+ units", 391
+"Rented modern row house, 7+ unit development", 396
+"Rental Condominium", 399
