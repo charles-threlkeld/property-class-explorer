@@ -82,7 +82,7 @@ ui <- page_sidebar(
     title = "Chicago Real Estate Explorer",
 
     sidebar = sidebar(
-        helpText("Select a ward."),
+        helpText("See <a>here<a href=\"https://charles-threlkeld-cook-county-real-estate-explorer.share.connect.posit.cloud/classApp.html\"> for a motivating example.")
 
         sliderInput(
             "ward1", label = "First Ward",
