@@ -1,6 +1,7 @@
 library(bslib)
 library(here)
 ## library(ptaxsim)
+library(scales)
 library(shiny)
 library(sf)
 library(tidyverse)
@@ -172,10 +173,10 @@ server <- function(input, output) {
                 aes(xintercept = median_value()), linewidth = 1) +
             scale_y_continuous(
                 "Number of Properties",
-                labels = scales::label_number_auto()) +
+                labels = label_number_auto()) +
             scale_x_continuous(
                 "Fair Cash Value",
-                labels = scales::label_currency(prefix="$"),
+                labels = label_currency(prefix="$", scale_cut=cut_short_scale()),
                 n.breaks = 12,
                 limits = c(input$range[1], input$range[2])) +
             labs(
