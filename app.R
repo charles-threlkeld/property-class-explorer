@@ -97,11 +97,11 @@ ui <- page_sidebar(
 
         selectInput(
             "location1", label = "First Neighborhood / Suburb",
-            choices = locations),
+            choices = locations, selected = "Lincoln Square"),
 
         selectInput(
             "location2", label = "Second Neighborhood / Suburb",
-            choices = locations),
+            choices = locations, selected = "Oak Park"),
 
         checkboxGroupInput(
             "checkGroup",
