@@ -12,13 +12,14 @@ description, class
 "Old style row house (townhome), over 62 years of age", 210
 "Apartment building with 2 to 6 units, any age", 211
 "Mixed-use commercial/residential building with apartment and commercial area totaling 6 units or less and below 20000 square feet of building area", 212
-"Split level residence with a lower level below grade", 234
-"Two-or-more story residence up to 62 years of age, 2001 to 3800 square feet", 278
-"Individually owned townhome or rowhouse up to 62 years of age", 295
 "Cooperative", 213
 "Owner-occupied B&B up to 6 rentable units", 218
 "Non-owner occupied B&B up to 6 units", 219
 "Single-Room Occupancy Rental Building", 225
+"Split level residence with a lower level below grade", 234
+"Two-or-more story residence up to 62 years of age, 2001 to 3800 square feet", 278
+"Individually owned townhome or rowhouse up to 62 years of age", 295
+"Condominium",299
 "Two-or-three story building, seven or more units", 313
 "Two-or-three story California type apartment, exterior entrance", 314
 "Two-or-three story California type apartment, interior entrance", 315

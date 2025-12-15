@@ -12,68 +12,78 @@ library(tidyverse)
 
 year <- 2023
 
-## See https://prodassets.cookcountyassessoril.gov/s3fs-public/form_documents/Class_codes_definitions_12.16.24.pdf
-residential_regression <- c(200, 201, 202, 203, 204, 205, 206, 207,
-                            208, 209, 210, 211, 212, 234, 278, 295)
-residential_nonregression <- c(200, 201, 213, 218, 219, 225)
-multi_family <- c(313, 314, 315, 318, 391, 396, 399)
+classes <- read_csv(here("data/class-descriptions.csv")) |>
+    mutate_at("class", as.factor)
 
-classes <- read_csv(here("data/class-descriptions.csv"))
+## Alt: query_db()
+all_pins <- read_csv("data/zoning_pins.csv") |>
+    select(class, cash_value, location) |>
+    mutate_at("class", as.factor)
 
-ward_bounds <- st_read("https://data.cityofchicago.org/resource/k9yb-bpqx.geojson")
-
+locations <- all_pins |>
+    distinct(location) |>
+    arrange(location)
 
 ######################
 ## Helper Functions ##
 ######################
 
 query_db <- function(year=2023) {
-    ##     ## Set up the DB connection
-    ##     ptaxsim_db_conn <- DBI::dbConnect(
-    ##                                 RSQLite::SQLite(),
-    ##                                 here("data/ptaxsim.db")
-    ##                             )
-    
-    ##     all_pins <- DBI::dbGetQuery(
-    ##                          ptaxsim_db_conn, str_glue("
-    ## SELECT p.year, p.pin, p.class, p.av_certified, p.tax_code_num, pg.longitude, pg.latitude
+    ## We grab the neighborhood bounds from the City Data Portal
+    neighborhood_bounds <- st_read("https://data.cityofchicago.org/resource/y6yq-dbs2.geojson")
+
+    sf_use_s2(FALSE)
+    municipality_bounds <- st_read("data/Municipality.geojson")
+
+    ## See https://prodassets.cookcountyassessoril.gov/s3fs-public/form_documents/Class_codes_definitions_12.16.24.pdf
+    residential_regression <- c(200, 201, 202, 203, 204, 205, 206, 207,
+                                208, 209, 210, 211, 212, 234, 278, 295)
+    residential_nonregression <- c(200, 201, 213, 218, 219, 225, 299)
+    multi_family <- c(313, 314, 315, 318, 391, 396, 399)
+
+    ## Set up the DB connection
+    ## residential_pins <- DBI::dbGetQuery(
+    ##          ptaxsim_db_conn, str_glue("
+    ## SELECT p.year, p.pin, p.class, p.av_certified, pg.longitude, pg.latitude
     ## FROM pin p
     ## INNER JOIN pin_geometry pg
     ## ON substr(p.pin, 1, 10) = pg.pin10
     ## AND p.year = pg.year
-    ## WHERE substr(p.tax_code_num, 1, 1) = '7'
-    ## AND p.year = {year}
+    ## WHERE p.year = {year}
     ## ")
     ## ) |>
-    ##     filter(class %in% residential_regression |                    # Include only residental buildings
+    ##     ## Include only residental buildings
+    ##     filter(class %in% residential_regression |  
     ##            class %in% residential_nonregression |
-    ##            class %in% multi_family)
+    ##            class %in% multi_family) |>
+    ##     ## Map lat/lon to point
+    ##     st_as_sf(coords = c("longitude", "latitude"), crs = 4326) |>
+    ##     ## Add in geographic data
+    ##     st_join(neighborhood_bounds, st_within) |>
+    ##     st_join(municipality_bounds, st_within) |>
+    ##     st_drop_geometry() |>
+    ##     as_tibble() |>
+    ##     ## Apply residential multiplier
+    ##     mutate(cash_value = av_certified * 10,
+    ##            location = ifelse(is.na(pri_neigh), MUNICIPALITY, pri_neigh),
+    ##            .keep = "unused") |>
+    ##     select(class, cash_value, location) |>
+    ##     mutate_at("class", as.factor)
 
-    all_pins <- read_csv("data/residential_pins.csv") |>
-        mutate(class = as.factor(class)) |>
-        mutate(av_certified = as.numeric(av_certified))
-
-    all_pins <-
-        all_pins |>
-        st_as_sf(coords = c("longitude", "latitude"), crs = 4326) |>  # Map lat/lon to point
-        mutate(cash_value = av_certified * 10)                        # Apply residential multiplier
-    
     ## DBI::dbDisconnect(ptaxsim_db_conn)
+    
+    all_pins <- read_csv("data/zoning_pins.csv") |>
+        select(class, cash_value, location)
 
     return(all_pins)
 }
 
 ## Given all Cook County, a ward number, and the geojson ward data
 ## return a subset of the property data pertaining only to that ward
-get_ward <- function(all_pins, ward_num) {
-    ## https://app.chicagoelections.gov/documents/general/Citywide%20Ward%20Map%202022.pdf
-    ward_bound <- ward_bounds |>
-        filter(ward == as.character(ward_num))
+get_location <- function(all_pins, location_name) {
     all_pins |>
-        filter(as.logical(st_within(geometry, ward_bound)))
+        filter(location == location_name)
 }
-
-
 
 #####################
 ## Shiny Functions ##
@@ -85,33 +95,17 @@ ui <- page_sidebar(
     sidebar = sidebar(
         tags$a(href="https://charles-threlkeld-cook-county-real-estate-explorer.share.connect.posit.cloud/classApp.html", "See here for a motivating example."),
 
-        sliderInput(
-            "ward1", label = "First Ward",
-            min = 1, max = 50, value = 47),
-        
-        sliderInput(
-            "ward2", label = "Second Ward",
-            min = 1, max = 50, value = 40),
+        selectInput(
+            "location1", label = "First Neighborhood / Suburb",
+            choices = locations),
 
-        sliderInput(
-            "nbins",
-            label = "Number of bins:",
-            min = 1,
-            max = 200,
-            value = 30
-        ),
-        
-        sliderInput(
-            "range",
-            label = "Range of interest ($):",
-            min = 0, 
-            max = 4000000, 
-            value = c(200000, 1000000)
-        ),
-        
+        selectInput(
+            "location2", label = "Second Neighborhood / Suburb",
+            choices = locations),
+
         checkboxGroupInput(
             "checkGroup",
-            "Select all that apply",
+            "Select Property Classes for Graph",
             choices = classes$class,
             selected = c("211")
         )
@@ -119,8 +113,8 @@ ui <- page_sidebar(
     ),
 
     card(
-        card_header("Assesed Valuation History"),
-        plotOutput("wardHist")
+        card_header("Location Comparison"),
+        plotOutput("locComparison")
     ),
 
     card(
@@ -130,47 +124,21 @@ ui <- page_sidebar(
 
 server <- function(input, output) {
 
-    residential_df <- query_db(year)
-
-    ward1_df <- reactive({
-        residential_df |>
-            get_ward(input$ward1) |>
-            mutate(ward = input$ward1)
+    loc_df <- reactive({
+        all_pins |>
+            filter(location == input$location1 | location == input$location2)
     })
 
-    ward2_df <- reactive({
-        residential_df |>
-            get_ward(input$ward2) |>
-            mutate(ward = input$ward2)
-    })
-
-    combined_df <- reactive({
-        if (input$ward1 == input$ward2) {
-            ward1_df() |>
-                mutate_at("ward", as.factor)
-        } else {
-            rows_append(ward1_df(), ward2_df()) |>
-                mutate_at("ward", as.factor)
-        }
-    })
-
-    class_subset_df <- reactive({
-        combined_df() |>
+    class_df <- reactive({
+        loc_df() |>
             filter(class %in% input$checkGroup)
     })
     
-    median_value <- reactive({
-        median(class_subset_df()$cash_value)
-    })
-
-    output$wardHist <- renderPlot({
-        ggplot(class_subset_df(), aes(cash_value, fill = ward)) +
+    output$locComparison <- renderPlot({
+        ggplot(class_df(), aes(cash_value, fill = location)) +
             geom_histogram(
-                bins=input$nbins,
                 alpha=0.8,
                 position = "dodge") +
-            geom_vline(
-                aes(xintercept = median_value()), linewidth = 1) +
             scale_y_continuous(
                 "Number of Properties",
                 labels = label_number_auto()) +
@@ -178,22 +146,20 @@ server <- function(input, output) {
                 "Fair Cash Value",
                 labels = label_currency(prefix="$", scale_cut=cut_short_scale()),
                 n.breaks = 12,
-                limits = c(input$range[1], input$range[2])) +
+                limits=c(0,2000000)) +
             labs(
                 title = str_glue("Cash Value of Properties in {year}"))
     })
 
     output$table <- renderTable(
-        combined_df() |>
-        st_drop_geometry() |>
-        group_by(class, ward) |>
+        loc_df() |>
+        group_by(class, location) |>
         summarize(count = n()) |>
-        pivot_wider(names_from = ward,
-                    names_prefix = "Ward ",
+        arrange(desc(count)) |>
+        pivot_wider(names_from = location,
                     values_from = count,
                     values_fill = 0) |>
-        merge(classes) |>
-        arrange(desc(pick(starts_with("Ward"))))
+        left_join(classes)
     )
 }
 
